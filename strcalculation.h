@@ -42,7 +42,7 @@ if(a>=0&&a<=b&&b<source.size())
 }
 else
 {
-    printf("str-copy interval error!\n");
+    printf("str-copy interval error[%d|%d]!\n",a,b);
 }
 
 }
@@ -113,7 +113,7 @@ void str_term_calc(std::string& input, std::string& output)
     std::vector<std::string> numbers;
     std::vector<char> operators;
     //DEBUG
-    //printf("c_inp:%s\n",input.c_str());
+    printf("str_term_calc_inp:%s\n",input.c_str());
     bool negation = 0;
     std::string tmp;
     long i = 0;
@@ -186,50 +186,56 @@ void str_term_calc(std::string& input, std::string& output)
     if(numbers.size()==operators.size()+1)
     {
         long oi = 0;
-        bool breaker = 0;
+        bool breaker = 1;
 
         while(numbers.size()>1)
         {
             oi = 0;
-            breaker = 0;
-            for(oi=0; oi<operators.size()||breaker; oi++)
+            breaker = 1;
+            for(oi=0; oi<operators.size()&&breaker; oi++)
             {
+                //printf("a\n");
                 if(operators.at(oi)=='^')
                 {
                     str_pow(numbers.at(oi),numbers.at(oi+1));
                     operators.erase(operators.begin()+oi);
                     numbers.erase(numbers.begin()+oi+1);
-                    breaker = 1;
+                    breaker = 0;
                     break;
                 }
             }
-            for(oi=0; oi<operators.size()||breaker; oi++)
+            for(oi=0; oi<operators.size()&&breaker; oi++)
             {
+                //printf("b\n");
                 if(operators.at(oi)=='*')
                 {
+                    //printf("mul\n");
                     str_mul(numbers.at(oi),numbers.at(oi+1));
                     operators.erase(operators.begin()+oi);
                     numbers.erase(numbers.begin()+oi+1);
-                    breaker = 1;
+                    breaker = 0;
                     break;
                 }
                 if(operators.at(oi)=='/')
                 {
+                    //printf("div\n");
                     str_div(numbers.at(oi),numbers.at(oi+1));
                     operators.erase(operators.begin()+oi);
                     numbers.erase(numbers.begin()+oi+1);
-                    breaker = 1;
+                    breaker = 0;
                     break;
                 }
             }
-            for(oi=0; oi<operators.size()||breaker; oi++)
+            //printf("after b\n");
+            for(oi=0; oi<operators.size()&&breaker; oi++)
             {
+                //printf("c\n");
                 if(operators.at(oi)=='+')
                 {
                     str_add(numbers.at(oi),numbers.at(oi+1));
                     operators.erase(operators.begin()+oi);
                     numbers.erase(numbers.begin()+oi+1);
-                    breaker = 1;
+                    breaker = 0;
                     break;
                 }
                 if(operators.at(oi)=='-')
@@ -237,7 +243,7 @@ void str_term_calc(std::string& input, std::string& output)
                     str_sub(numbers.at(oi),numbers.at(oi+1));
                     operators.erase(operators.begin()+oi);
                     numbers.erase(numbers.begin()+oi+1);
-                    breaker = 1;
+                    breaker = 0;
                     break;
                 }
             }
@@ -251,7 +257,7 @@ void str_term_calc(std::string& input, std::string& output)
         printf("Error with amount of operators related to numbers!\n");
     }
     output=numbers.at(0);
-    printf("rettermcalc:'%s'\n",output.c_str());
+    printf("termcalcresult:'%s'\n",output.c_str());
 }
 
 class calc_contain
@@ -280,184 +286,135 @@ void clean(std::string& Astr)
         }
     }
 }
-void clean(calc_contain* obj)
-{
-    long i;
-    for(i=1; i < obj->calc_str_A.size(); i++)
-    {
-        if(obj->calc_str_A.at(i)=='-'&&obj->calc_str_A.at(i-1)=='-')
-        {
-            obj->calc_str_A.erase(obj->calc_str_A.begin()+i);
-        }
-        if(obj->calc_str_A.at(i)=='-'&&obj->calc_str_A.at(i-1)=='+')
-        {
-            obj->calc_str_A.erase(obj->calc_str_A.begin()+i-1);
-        }
-        if(obj->calc_str_A.at(i)=='+'&&obj->calc_str_A.at(i-1)=='-')
-        {
-            obj->calc_str_A.erase(obj->calc_str_A.begin()+i);
-        }
-        if(obj->calc_str_A.at(i)=='+'&&obj->calc_str_A.at(i-1)=='+')
-        {
-            obj->calc_str_A.erase(obj->calc_str_A.begin()+i);
-        }
-    }
-    //DEBUG
-    //printf("B[%d]:%s\n",obj->calc_str_B.size(),obj->calc_str_B.c_str());
-    for(i=1; i < obj->calc_str_B.size(); i++)
-    {
-        if(obj->calc_str_B.at(i)=='-'&&obj->calc_str_B.at(i-1)=='-')
-        {
-            obj->calc_str_B.erase(obj->calc_str_B.begin()+i);
-        }
-        if(obj->calc_str_B.at(i)=='-'&&obj->calc_str_B.at(i-1)=='+')
-        {
-            obj->calc_str_B.erase(obj->calc_str_B.begin()+i-1);
-        }
-        if(obj->calc_str_B.at(i)=='+'&&obj->calc_str_B.at(i-1)=='-')
-        {
-            obj->calc_str_B.erase(obj->calc_str_B.begin()+i);
-        }
-        if(obj->calc_str_B.at(i)=='+'&&obj->calc_str_B.at(i-1)=='+')
-        {
-            obj->calc_str_B.erase(obj->calc_str_B.begin()+i);
-        }
-    }
-}
 
-void inner_calc(std::string& ret_calc_and_before,calc_contain* layer)
+
+void inner_calc(std::string& ret_calc_term,calc_contain* layer)
 {
     //DEBUG
-    //printf("innercalcinp:'%s'\n",ret_calc_and_before.c_str());
-    std::string str_next = ret_calc_and_before;
-    if(layer->next==0)
+    //printf("lyrsbrkts%d castr:%d\n",layer->nexts.size(),this->calc_strs.size());
+    long i;
+    if(layer->nexts.size()==0)
     {
-        std::string tmp = layer->calc_str_A;
-        ret_calc_and_before = "";
-        str_term_calc(tmp,str_next);
-        ret_calc_and_before = str_next;
-        printf("retinnercalcA:'%s'\n",ret_calc_and_before.c_str());
+        //DEBUG
+        printf("end_str_term_calc:'%s'\n",layer->calc_strs.at(0).c_str());
+        std::string tmp_term = "";
+        tmp_term = layer->calc_strs.at(0).c_str();
+        str_term_calc(tmp_term,ret_calc_term);
     }
     else
     {
-        //DEBUG
-        //printf("notdeepest!\n");
-        std::string tmp = layer->calc_str_A;
-        tmp += ret_calc_and_before;
-        tmp += layer->calc_str_B;
-        ret_calc_and_before = "";
-        str_term_calc(tmp,str_next);
-        ret_calc_and_before = str_next;
-        printf("retinnercalcB:'%s'\n",ret_calc_and_before.c_str());
+        std::string tmp_term = "";
+        std::string tmp_part;
+        for(i=0; i<layer->nexts.size(); i++)
+        {
+
+            tmp_part = "";
+            inner_calc(tmp_part,layer->nexts.at(i));
+            tmp_term+=layer->calc_strs.at(i);
+            tmp_term+=tmp_part;
+            //printf("%d\n",i);
+        }
+        //printf("str_term_calc:'%s'\n",tmp_term.c_str());
+        str_term_calc(tmp_term,ret_calc_term);
     }
+    printf("inner_calc_ret:'%s'\n",ret_calc_term.c_str());
 
 }
 
 public:
-std::string calc_str_A;
-calc_contain* next;
-std::string calc_str_B;
+std::vector<std::string> calc_strs;
+std::vector<calc_contain*> nexts;
 
 calc_contain()
 {
-    next = 0;
-    calc_str_A = "";
-    calc_str_B = "";
+
 }
 
 ~calc_contain()
 {
-    if(next!=0)
+    for(long i = 0; i < nexts.size(); i++)
     {
-        next->~calc_contain();
+        nexts.at(i)->~calc_contain();
     }
-    next = 0;
 }
 
 void load(std::string& term)
 {
-    long a = 0;
-    long b = term.size()-1;
+    long tsz = 0;
+    long lbrbcnt = 0;
+    calc_strs.push_back("");
+    std::vector<std::string> tmp_brackets;
+    while(tsz<term.size())
+    {
 
-    while(term.at(a)!='('&&a<term.size()-1)
-    {
-        a++;
-    }
-    while(term.at(b)!=')'&&b>0)
-    {
-        b--;
-    }
-    if(a<term.size()-1)
-    {
-        intervalstrcopy(term,calc_str_A,0,a-1);
-    }
-    if(b>0)
-    {
-        intervalstrcopy(term,calc_str_B,b+1,term.size()-1);
-    }
-    if(a==term.size()-1&&b==0)
-    {
-        //DEBUG
-        //printf("NO Bracket!\n");
+        /*bracketindexloop*/
+        if(term.at(tsz)=='(')
+        {
+            nexts.push_back(new calc_contain());
+            calc_strs.push_back("");
+            tmp_brackets.push_back("");
+            lbrbcnt++;
+            tsz++;
+            while(lbrbcnt!=0&&tsz<term.size())
+            {
+                if(term.at(tsz)=='(')
+                {
+                    lbrbcnt++;
+                }
+                if(term.at(tsz)==')')
+                {
+                    lbrbcnt--;
+                }
+                if(lbrbcnt!=0)
+                {
+                    tmp_brackets.back()+=term.at(tsz);
+                    tsz++;
+                }
 
-        intervalstrcopy(term,calc_str_A,0,a);
-    }
 
-    this->clean(this);
+
+            }
+
+        }
+        else
+        {
+            calc_strs.back()+=term.at(tsz);
+        }
+
+
+
+        tsz++;
+    }
+    long i;
+    for(i = 0; i < this->calc_strs.size(); i++)
+    {
+        clean(calc_strs.at(i));
+    }
     //DEBUG
-    //printf("a=%d:%s\n",a,calc_str_A.c_str());
-    //printf("b=%d:%s\n",b,calc_str_B.c_str());
+    printf("tmpbrackets:\n");
+    printstrvec(tmp_brackets);
+    printf("thislayer:\n");
+    printstrvec(calc_strs);
 
-    if(a<=b&&a<term.size()-1&&b>=0)
+    for(i = 0; i < nexts.size(); i++)
     {
-        std::string inner = "";
-        intervalstrcopy(term,inner,a+1,b-1);
-        //DEBUG
-        printf("inbracket:'%s'\n",inner.c_str());
-
-        next = new calc_contain();
-        next->load(inner);
+        nexts.at(i)->load(tmp_brackets.at(i));
     }
 
 }
-
 
 
 double calculate()
 {
-    calc_contain* deepest = this;
-    std::vector<calc_contain*> layer;
-    layer.push_back(deepest);
-    while(deepest->next!=0)
-    {
-        deepest=deepest->next;
-        layer.push_back(deepest);
-    }
-
     double result = 0;
-    long i = layer.size()-1;
-    std::string str_res = "";
+    std::string str_result = "";
+    this->inner_calc(str_result,this);
 
-    //DEBUG
-    printf("layers:%d\n",i);
-
-    while(i>=0)
-    {
-        inner_calc(str_res,layer.at(i));
-        //printf("tmpc:%s\n",str_res.c_str());
-        clean(str_res);
-        //DEBUG
-        //printf("tmpc:%s\n",str_res.c_str());
-        i--;
-    }
-
-    sscanf(str_res.c_str(),"%lf",&result);
-
+    sscanf(str_result.c_str(),"%lf",&result);
 
     return result;
+
 }
-
-
 
 
 
