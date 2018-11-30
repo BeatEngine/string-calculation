@@ -5,6 +5,11 @@
 int main()
 {
     printf("Usage:\n");
+    printf("'+' for addition!\n");
+    printf("'-' for subtraction!\n");
+    printf("'*' for multiplication!\n");
+    printf("'/' for division!\n");
+    printf("'^' for exponential power (and roots if you know)!\n");
 
     char tmp[500];
     std::string term;

@@ -320,6 +320,11 @@ void inner_calc(std::string& ret_calc_term,calc_contain* layer)
             tmp_term+=tmp_part;
             //printf("%d\n",i);
         }
+        for(i=i; i<layer->calc_strs.size(); i++)
+        {
+            tmp_term+=layer->calc_strs.at(i);
+        }
+
         //printf("str_term_calc:'%s'\n",tmp_term.c_str());
         clean(tmp_term);
         str_term_calc(tmp_term,ret_calc_term);
