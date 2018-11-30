@@ -265,11 +265,14 @@ class calc_contain
 
 void clean(std::string& Astr)
 {
+    //DEBUG
+    //printf("Before:'%s'\n",Astr.c_str());
     long i;
     for(i=1; i < Astr.size(); i++)
     {
         if(Astr.at(i)=='-'&&Astr.at(i-1)=='-')
         {
+            Astr.at(i-1) = '+';
             Astr.erase(Astr.begin()+i);
         }
         if(Astr.at(i)=='-'&&Astr.at(i-1)=='+')
@@ -285,6 +288,8 @@ void clean(std::string& Astr)
             Astr.erase(Astr.begin()+i);
         }
     }
+    //DEBUG
+    //printf("After:'%s'\n",Astr.c_str());
 }
 
 
@@ -299,6 +304,7 @@ void inner_calc(std::string& ret_calc_term,calc_contain* layer)
         printf("end_str_term_calc:'%s'\n",layer->calc_strs.at(0).c_str());
         std::string tmp_term = "";
         tmp_term = layer->calc_strs.at(0).c_str();
+        clean(tmp_term);
         str_term_calc(tmp_term,ret_calc_term);
     }
     else
@@ -315,6 +321,7 @@ void inner_calc(std::string& ret_calc_term,calc_contain* layer)
             //printf("%d\n",i);
         }
         //printf("str_term_calc:'%s'\n",tmp_term.c_str());
+        clean(tmp_term);
         str_term_calc(tmp_term,ret_calc_term);
     }
     printf("inner_calc_ret:'%s'\n",ret_calc_term.c_str());
@@ -386,10 +393,6 @@ void load(std::string& term)
         tsz++;
     }
     long i;
-    for(i = 0; i < this->calc_strs.size(); i++)
-    {
-        clean(calc_strs.at(i));
-    }
     //DEBUG
     printf("tmpbrackets:\n");
     printstrvec(tmp_brackets);

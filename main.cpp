@@ -21,8 +21,6 @@ int main()
     printf("Term:'%s'\n",term.c_str());
     printf("= %f\n",result);
 
-
-    test.~calc_contain();
     return 0;
 }
 
