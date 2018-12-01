@@ -192,8 +192,11 @@ void str_term_calc(std::string& input, std::string& output)
         {
             oi = 0;
             breaker = 1;
-            for(oi=0; oi<operators.size()&&breaker; oi++)
+
+            for(oi=operators.size()-1; oi>=0&&breaker; oi--)
             {
+                //DEBUG
+                //printf("oi:%d ns:%d\n",oi,numbers.size());
                 //printf("a\n");
                 if(operators.at(oi)=='^')
                 {
@@ -204,6 +207,19 @@ void str_term_calc(std::string& input, std::string& output)
                     break;
                 }
             }
+            //Wrong direction for exponential towers
+            /*for(oi=0; oi<operators.size()&&breaker; oi++)
+            {
+                //printf("a\n");
+                if(operators.at(oi)=='^')
+                {
+                    str_pow(numbers.at(oi),numbers.at(oi+1));
+                    operators.erase(operators.begin()+oi);
+                    numbers.erase(numbers.begin()+oi+1);
+                    breaker = 0;
+                    break;
+                }
+            }*/
             for(oi=0; oi<operators.size()&&breaker; oi++)
             {
                 //printf("b\n");
