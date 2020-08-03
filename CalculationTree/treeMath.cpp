@@ -68,6 +68,14 @@ class term
             {
                 if(str.at(i) == oper)
                 {
+                    if(i > 0)
+                    {
+                        if(str.at(i-1) == '-' || str.at(i-1) == '+' || str.at(i-1) == '*' || str.at(i-1) == '/' || str.at(i-1) == '^')
+                        {
+                            i++;
+                            continue;
+                        }
+                    }
                     return true;
                 }
             }
@@ -77,7 +85,7 @@ class term
 
     void load(std::string& termMath)
     {
-        char ops[6] = "-+*/^";
+        char ops[6] = "+-*/^";
         bool isValue = true;
 
         if(termMath.at(0) == '(' && termMath.at(termMath.length()-1) == ')')
@@ -113,9 +121,9 @@ class term
         
 
 
-        for(int opi = 0; opi < 5; opi++)
+        for(int opi = 0; opi < 5 && termMath.size()>1; opi++)
         {
-            if(containsOperator(termMath, ops[opi]))
+            if(containsOperator(termMath, ops[opi]) && termMath.at(0)!=ops[opi])
             {
                 int a = 0;
                 for(int i = 0; i < termMath.length(); i++)
@@ -140,7 +148,7 @@ class term
                     }
                     if(i < termMath.length())
                     {
-                        if(termMath.at(i) == ops[opi])
+                        if(termMath.at(i) == ops[opi] && i-a > 0)
                         {
                             operation = ops[opi];
                             std::string part = termMath.substr(a,i-a);
@@ -155,6 +163,17 @@ class term
                     std::string part = termMath.substr(a,termMath.length()-a);
                     links.push_back(term(part));
                 }
+                /*if(links.size() == 1)
+                {
+                    operation = '#';
+                    value = links.at(0).value;
+                    if(links.at(0).unknownVariable.size() > 0)
+                    {
+                        unknownVariable = links.at(0).unknownVariable;
+                    }
+                    links.clear();
+                }*/
+
                 isValue = false;
                 break;
             }
@@ -176,12 +195,32 @@ class term
     {
         for(int i = 0; i < str.length(); i++)
         {
-            if((str.at(i) < 48 || str.at(i) > 57) && str.at(i) != '.' && str.at(i) != ',')
+            if((str.at(i) < 48 || str.at(i) > 57) && str.at(i) != '.' && str.at(i) != ',' && str.at(i) != '-')
             {
                 return false;
             }
         }
         return true;
+    }
+
+    unsigned char operationPriority(char operation)
+    {
+        if(operation == '-' || operation == '+')
+        {
+            return 0;
+        }
+        if(operation == '*' || operation == '/')
+        {
+            return 1;
+        }
+        if(operation == '^')
+        {
+            return 2;
+        }
+        else
+        {
+            return 3;
+        }
     }
 
     public:
@@ -190,6 +229,29 @@ class term
     {
         operation = '#';
     }
+
+    term(term* other)
+    {
+        this->operation = other->operation;
+        this->unknownVariable = other->unknownVariable;
+        this->value = other->value;
+        for(int i = 0; i < other->links.size(); i++)
+        {
+            links.push_back(term(other->links.at(i)));
+        }
+    }
+
+    void operator= (term& other)
+    {
+        this->operation = other.operation;
+        this->unknownVariable = other.unknownVariable;
+        this->value = other.value;
+        for(int i = 0; i < other.links.size(); i++)
+        {
+            links.push_back(term(other.links.at(i)));
+        }
+    }
+
 
     void setValue(std::string numeric)
     {
@@ -228,9 +290,18 @@ class term
             }
             else
             {
-                for(int i = 0; i < numeric.length(); i++)
+                int start = 0;
+                if(numeric.at(0) == '-')
+                {
+                    start = 1;
+                }
+                for(int i = start; i < numeric.length(); i++)
                 {
                     value += (numeric.at(i)-48)*pow(10, numeric.length()-i-1);
+                }
+                if(start != 0)
+                {
+                    value = -value;
                 }
             }
         }
@@ -249,6 +320,22 @@ class term
         for(int i = 0; i < this->links.size(); i++)
         {
             if(links.at(i).containsUnknownVariables())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool containsUnknownVariable(std::string& variable)
+    {
+        if(unknownVariable.size() > 0 && unknownVariable == variable)
+        {
+            return true;
+        }
+        for(int i = 0; i < this->links.size(); i++)
+        {
+            if(links.at(i).containsUnknownVariable(variable))
             {
                 return true;
             }
@@ -302,28 +389,173 @@ class term
         return result;
     }
 
-/*
-    if(termMath.at(i) == '(')
+    std::string toString()
     {
-        int caps = 0;
-        int a = i;
-        std::string subTerm;
-        while (i < termMath.length() && caps > 0)
-        {
-            if(termMath.at(i) == '(')
-            {
-                caps++;
-            }
-            else if(termMath.at(i) == ')')
-            {
-                caps--;
-            }
-            i++;
-        }
-        subTerm = termMath.substr(a, i-a);
-
+        return this->toString(0);
     }
-*/
+    std::string toString(unsigned char parentOperationPriority)
+    {
+        std::string result = "";
+        if(operation == '+' || operation == '-' || operation == '*' || operation == '/' || operation == '^')
+        {
+            bool setBracket = false;
+            if(parentOperationPriority > operationPriority(operation))
+            {
+                setBracket = true;
+                result = "(";
+            }
+            for(int i = 0; i < links.size(); i++)
+            {
+                result += links.at(i).toString(operationPriority(operation));
+                if(i < links.size()-1)
+                {
+                    result += operation;
+                }
+            }
+            if(setBracket)
+            {
+                result += ")";
+            }
+        }else
+        {
+            if(unknownVariable.size() > 0)
+            {
+                return unknownVariable;
+            }
+            if(value - (double)((long)value) == 0.0)
+            {
+                if(value < 0)
+                {
+                    return "(" + std::to_string((long)value) + ")";  
+                }
+                return std::to_string((long)value);    
+            }
+            if(value < 0)
+            {
+                return "(" + std::to_string(value) + ")";    
+            }
+            return std::to_string(value);
+        }
+        return result;
+    }
+
+    void derivativeInternal(std::string& variable, char parentOperation)
+    {
+        if(operation == '*')
+        {
+            int subc = 0;
+            for(int i = 0; i < links.size(); i++)
+            {
+                if(links.at(i).containsUnknownVariable(variable)) //is a subfunction
+                {
+                    subc++;
+                }
+            }
+            if(subc == links.size() && links.size() == 2) //Productrule
+            {
+                term deriOne(links.at(0));
+                term one(links.at(0));
+                deriOne.derivativeInternal(variable, operation);
+                term deriTwo(links.at(1));
+                term two(links.at(1));
+                deriTwo.derivativeInternal(variable, operation);
+                operation = '+';
+                links.clear();
+                term A;
+                A.operation = '*';
+                term B;
+                B.operation = '*';
+                A.links.push_back(deriOne);
+                A.links.push_back(two);
+                B.links.push_back(deriTwo);
+                B.links.push_back(one);
+                this->links.push_back(A);
+                this->links.push_back(B);
+            }
+            else if(links.size() == 2 && subc == 1)
+            {
+                for(int i = 0; i < links.size(); i++)
+                {
+                    if(links.at(i).containsUnknownVariable(variable)) //is a subfunction
+                    {
+                        links.at(i).derivativeInternal(variable, operation);
+                    }
+                }
+            }
+            
+        }
+        else if(operation == '+' || operation == '-')
+        {
+            for(int i = 0; i < links.size(); i++)
+            {
+                links.at(i).derivativeInternal(variable, operation);
+            }
+        }
+        else if(operation == '/')
+        {
+
+        }
+        else if(operation == '^')
+        {
+            int subc = 0;
+            for(int i = 0; i < links.size(); i++)
+            {
+                if(links.at(i).containsUnknownVariable(variable)) //is a subfunction
+                {
+                    subc++;
+                }
+            }
+            if(links.size() == 2 && subc == 1)
+            {
+                if(links.at(0).containsUnknownVariable(variable)) // x^n
+                {
+                    term n(links.at(1));
+                    term x(this);
+                    x.links.at(1).value -= 1;
+                    operation = '*';
+                    links.clear();
+                    links.push_back(n);
+                    links.push_back(x);
+                }
+                else if(links.at(1).containsUnknownVariable(variable) && (long)((links.at(0).value - M_E) * 10000) == 0)
+                {
+                    term h(links.at(1));
+                    term g(this);
+                    operation = '*';
+                    links.clear();
+                    links.push_back(g);
+                    h.derivativeInternal(variable, operation);
+                    links.push_back(h);
+                }
+            }
+        }
+        else
+        {
+            if(unknownVariable.size()>0)
+            {
+                if(unknownVariable == variable)
+                {
+                    value = 1.0;
+                }
+                else
+                {
+                    value = 0.0;
+                }
+            }
+            else
+            {
+                value = 0.0;
+            }
+        }
+    }
+
+    term derivative(std::string variable)
+    {
+        term result(this);
+        result.derivativeInternal(variable, operation);
+        int dbg = 0;
+        return result;
+    }
 
     term(std::string& termMath)
     {
@@ -343,16 +575,33 @@ int main(int args, char** arg)
 
     std::string easy = "5*(7-3-2)^2";
 
-    term t1(termStr);
+    std::string function1 = "0.5*x^3+3*x^2-5.764*x+123,1415";
+
+    std::string function2 = "(7*x^2+1)*" + std::to_string(M_E) + "^((-2)*x)";
+
+    term t1(function2);
 
     bool containsUnknowns = t1.containsUnknownVariables();
 
     printf("Contains unknowns: %d\n", containsUnknowns);
 
+    std::string generated = t1.toString();
+
+    term tCheck(generated);
+
+    
+
     if(!containsUnknowns)
     {
-        printf("Calulated result %s = %f\n", termStr.c_str(), t1.calculate());
+        printf("Calulated result %s = %s = %f\n",termStr.c_str(), generated.c_str(), t1.calculate());
+        printf("Check generated: %f == %f ? --> %d",t1.calculate(), tCheck.calculate(), tCheck.calculate() == t1.calculate());
     }
+    else
+    {
+        term t1_D1 = t1.derivative(std::string("x"));
+        printf("Derivate of %s --> %s\n", t1.toString().c_str(), t1_D1.toString().c_str());
+    }
+    
 
     int dbg = 1;
 
