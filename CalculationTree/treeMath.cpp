@@ -163,7 +163,7 @@ class term
                     std::string part = termMath.substr(a,termMath.length()-a);
                     links.push_back(term(part));
                 }
-                /*if(links.size() == 1)
+                if(links.size() == 1)
                 {
                     operation = '#';
                     value = links.at(0).value;
@@ -172,7 +172,7 @@ class term
                         unknownVariable = links.at(0).unknownVariable;
                     }
                     links.clear();
-                }*/
+                }
 
                 isValue = false;
                 break;
@@ -223,6 +223,87 @@ class term
         }
     }
 
+    void summerizeFunction()
+    {
+        if(links.size()==2)
+        {
+            if(links.at(0).links.size() == 0 && links.at(0).unknownVariable.size() == 0 && links.at(0).value == 0 && (operation == '*' || operation =='^' || operation =='+'))
+            {
+                if(operation == '+')
+                {
+                    links.erase(links.begin());
+                }
+                else if(operation == '*')
+                {
+                    links.erase(links.begin()+1);
+                }else if(operation == '^')
+                {
+                    links.erase(links.begin()+1);
+                    links.at(0).value = 1;
+                }
+            }
+            else if(links.at(0).links.size() == 0 && links.at(0).unknownVariable.size() == 0 && links.at(0).value == 1 && (operation == '*' || operation =='^'))
+            {
+                if(operation == '*')
+                {
+                    links.erase(links.begin());
+                }else if(operation == '^')
+                {
+                    links.erase(links.begin()+1);
+                }
+            }
+            else if(links.at(1).links.size() == 0 && links.at(1).unknownVariable.size() == 0 && links.at(1).value == 0 && (operation == '*' || operation =='^' || operation =='+'))
+            {
+                if(operation == '+')
+                {
+                    links.erase(links.begin()+1);
+                }
+                else if(operation == '*')
+                {
+                    links.erase(links.begin());
+                }else if(operation == '^')
+                {
+                    links.erase(links.begin());
+                    links.at(0).value = 1;
+                }
+            }
+            else if(links.at(1).links.size() == 0 && links.at(1).unknownVariable.size() == 0 && links.at(1).value == 1 && (operation == '*' || operation =='^'))
+            {
+                if(operation == '*')
+                {
+                    links.erase(links.begin()+1);
+                }else if(operation == '^')
+                {
+                    links.erase(links.begin()+1);
+                }
+            }
+        }
+        if(links.size()==1 && links.at(0).links.size() == 0)
+        {
+            operation = links.at(0).operation;
+            value = links.at(0).value;
+            unknownVariable = links.at(0).unknownVariable;
+            links.clear();
+        }
+        if(this->containsUnknownVariables())
+        {
+            for(int i = 0; i < links.size(); i++)
+            {
+                links.at(i).summerizeFunction();
+            }
+        }
+        else
+        {
+            if(operation == '+' || operation == '-' || operation == '*' || operation == '/' || operation == '^')
+            {
+                value = this->calculate();
+                operation = '#';
+                links.clear();
+                unknownVariable = "";
+            }
+        }
+    }
+
     public:
 
     term()
@@ -241,7 +322,7 @@ class term
         }
     }
 
-    void operator= (term& other)
+    void operator= (const term& other)
     {
         this->operation = other.operation;
         this->unknownVariable = other.unknownVariable;
@@ -511,7 +592,22 @@ class term
                 {
                     term n(links.at(1));
                     term x(this);
-                    x.links.at(1).value -= 1;
+
+                    if(x.links.at(1).unknownVariable.size() == 0)
+                    {
+                        x.links.at(1).value -= 1;
+                    }
+                    else
+                    {
+                        term subtTerm;
+                        subtTerm.operation = '-';
+                        subtTerm.links.push_back(x.links.at(1));
+                        term one;
+                        one.operation = '#';
+                        one.value = 1;
+                        subtTerm.links.push_back(one);
+                        x.links.at(1) = subtTerm;
+                    }
                     operation = '*';
                     links.clear();
                     links.push_back(n);
@@ -541,6 +637,7 @@ class term
                 {
                     value = 0.0;
                 }
+                unknownVariable = "";
             }
             else
             {
@@ -553,6 +650,7 @@ class term
     {
         term result(this);
         result.derivativeInternal(variable, operation);
+        result.summerizeFunction();
         int dbg = 0;
         return result;
     }
@@ -579,7 +677,13 @@ int main(int args, char** arg)
 
     std::string function2 = "(7*x^2+1)*" + std::to_string(M_E) + "^((-2)*x)";
 
+    std::string function3 = "(a*x^b+c)*" + std::to_string(M_E) + "^(d*x)";
+
     term t1(function2);
+
+    term t2(function1);
+
+    term t3(function3);
 
     bool containsUnknowns = t1.containsUnknownVariables();
 
@@ -600,6 +704,15 @@ int main(int args, char** arg)
     {
         term t1_D1 = t1.derivative(std::string("x"));
         printf("Derivate of %s --> %s\n", t1.toString().c_str(), t1_D1.toString().c_str());
+        term t2_D1 = t2.derivative(std::string("x"));
+        printf("Derivate of %s --> %s\n", t2.toString().c_str(), t2_D1.toString().c_str());
+        term t3_D1 = t3.derivative(std::string("x"));
+        printf("Derivate of %s --> %s\n", t3.toString().c_str(), t3_D1.toString().c_str());
+        printf("\n");
+        term t1_D2 = t1_D1.derivative(std::string("x"));
+        printf("Derivate of %s --> %s\n", t1_D1.toString().c_str(), t1_D2.toString().c_str());
+        term t2_D2 = t2_D1.derivative(std::string("x"));
+        printf("Derivate of %s --> %s\n", t2_D1.toString().c_str(), t2_D2.toString().c_str());
     }
     
 
