@@ -37,6 +37,32 @@ std::vector<double> findNullsOf(term& function, term& functionDerivative)
         results.push_back(r);
     }
 
+    r = 15;    
+    for(int i = 0; i < 15; i++)
+    {
+        r = r - function.calculate(x, r)/functionDerivative.calculate(x, r);
+    }
+
+    if((long)(function.calculate(x, r)*10) == 0)
+    {
+        results.push_back(r);
+    }
+
+    r = -15;
+    double a;
+    double b;
+    for(int i = 0; i < 15; i++)
+    {
+        a = function.calculate(x, r);
+        b = functionDerivative.calculate(x, r);
+        r -= a/b;
+    }
+
+    if((long)(function.calculate(x, r)*10) == 0)
+    {
+        results.push_back(r);
+    }
+
     r = 50;    
     for(int i = 0; i < 15; i++)
     {
@@ -49,8 +75,6 @@ std::vector<double> findNullsOf(term& function, term& functionDerivative)
     }
 
     r = -50;
-    double a;
-    double b;
     for(int i = 0; i < 15; i++)
     {
         a = function.calculate(x, r);
@@ -68,7 +92,7 @@ std::vector<double> findNullsOf(term& function, term& functionDerivative)
     {
         for(int finder = i + 1; finder < results.size(); finder++)
         {
-            if((long)(results.at(i)*1000 - results.at(finder)*1000) == 0)
+            if((long)(results.at(i)*100 - results.at(finder)*100) == 0)
             {
                 results.erase(results.begin() + i);
                 i = -1;
@@ -200,7 +224,7 @@ void removeSpaces(std::string* str)
 int main(int args, char** arg)
 {
     printf("Enter a mathematical Function in Format 0-9; 0.4234; 0,3535; subtractions: '-'; additions: '+'; multiplications:'*'; divisoins:'/'; pow:'^'\n");
-    printf("Example: 4*x^3 - 2.71828182^x");
+    printf("Example: 4*x^3 - 2.71828182^x\n\n");
     while (1)
     {
         char buffer[100] = "";
